@@ -40,7 +40,7 @@ export default function App() {
   const { fingerprint, loading: fpLoading } = useFingerprint()
   const [activeCategory, setActiveCategory] = useState('computer_science')
   const [projects, setProjects] = useState([])
-  const [votedCategories, setVotedCategories] = useState(new Set())
+  const [hasVotedAny, setHasVotedAny] = useState(false)
   const [loading, setLoading] = useState(true)
   const [confirmProject, setConfirmProject] = useState(null)
   const [detailProject, setDetailProject] = useState(null)
@@ -58,9 +58,7 @@ export default function App() {
           getVoteStatus(fingerprint),
         ])
         setProjects(projs)
-        const votedCats = new Set()
-        votes.forEach((v) => { if (v.category) votedCats.add(v.category) })
-        setVotedCategories(votedCats)
+        setHasVotedAny(votes.length > 0)
       } catch (err) {
         console.error(err)
         setError('Failed to load projects.')
@@ -75,13 +73,13 @@ export default function App() {
     setError(null)
     try {
       await submitVote(project.id, fingerprint, activeCategory)
-      setVotedCategories((prev) => new Set([...prev, activeCategory]))
+      setHasVotedAny(true)
       setConfirmProject(null)
       setSuccessInfo({ show: true, name: project.title })
     } catch (err) {
       if (err.message === 'ALREADY_VOTED') {
-        setVotedCategories((prev) => new Set([...prev, activeCategory]))
-        setError('Already voted in this category.')
+        setHasVotedAny(true)
+        setError('You have already voted.')
       } else {
         setError('Failed to submit vote.')
       }
@@ -96,15 +94,15 @@ export default function App() {
     </div>
   )
 
-  const hasVoted = votedCategories.has(activeCategory)
+  const hasVoted = hasVotedAny
 
   return (
     <div style={s.page}>
-      <Header votedCount={votedCategories.size} />
+      <Header votedCount={hasVotedAny ? 1 : 0} />
 
       <div style={s.content}>
         <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} style={s.hero}>
-          <h2 style={{ fontSize: 'clamp(24px, 5vw, 36px)', fontWeight: 600, color: '#23A38F', letterSpacing: '-0.02em' }}>9<sup style={{ fontSize: '0.6em' }}>th</sup> Project Show</h2>
+          <h2 style={{ fontSize: 'clamp(24px, 5vw, 36px)', fontWeight: 600, color: '#23A38F', letterSpacing: '-0.02em' }}><span>9<sup style={{ fontSize: '0.6em' }}>th</sup> Project Exhibition 2026</span></h2>
           <p style={s.subtitle}>University Of Computer Studies (Monywa)</p>
           <div style={s.tabs}>
             {categories.map((cat) => (
